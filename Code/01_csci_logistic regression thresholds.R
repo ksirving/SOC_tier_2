@@ -1,13 +1,21 @@
-setwd("C:/Users/Raphaelm/Documents/SCCWRP/Biological Response to Altered Flow_RM/data/BioResp_020516")
+# setwd("/Users/katieirving/Documents/Projects/San_Juan/tier_2/forKris")
 setwd("/Users/katieirving/Documents/git/SOC_tier2/SOC_tier_2")
-csci<-read.csv("data/DeltaH_CSCI_MMI.csv")
 
+csci<-read.csv("Data/DeltaH_CSCI_MMI.CSV")
+head(csci)
 library(CSCI)
+library(reshape)
+# install.packages("reshape")
+library(ggplot2)
+
+## below defines thresholds from all csci
+head(csci)
 ref<-loadRefData()
 endpoints<-c("CSCI","MMI","OoverE","Clinger_PercentTaxa_scored","Coleoptera_PercentTaxa_scored","EPT_PercentTaxa_scored",
              "Intolerant_Percent_scored","Shredder_Taxa_scored","Taxonomic_Richness_scored")
 
 thresholds<-data.frame(Index=endpoints)
+head(thresholds)
 thresholds$Mean<-  sapply(endpoints, function(x) mean(ref[,x]))
 thresholds$Mean[thresholds$Index %in% c("CSCI","OoverE")]<-1
 thresholds$SD<-  sapply(endpoints, function(x) sd(ref[,x]))
@@ -21,10 +29,17 @@ thresholds$ObservedQuartile<-sapply(thresholds$Index2, function(ind)
   quantile(na.omit(csci[,ind]),.25, na.rm=T)
 })
 
+head(thresholds)
+## from here add new formatted data
+## median only so far
+new_csci <- read.csv("output_data/00_csci_delta_formatted.csv")
+
 biol.endpoints<-c("CSCI","OoverE","MMI")#,
 # "Clinger_PercentTaxa_score","Coleoptera_PercentTaxa_score","Taxonomic_Richness_score",
 # "EPT_PercentTaxa_score","Shredder_Taxa_score","Intolerant_Percent_score")
-hydro.endpoints<-c("BFR","FracYearsNoFlow","HighDur","HighNum","Hydroperiod","LowDur", "LowNum","MaxMonth","MaxMonthQ","MedianNoFlowDays","MinMonth","MinMonthQ","NoDisturb","PDC50","Q01","Q05","Q10","Q25","Q50","Q75","Q90", "Q95","Q99","Qmax","QmaxIDR","Qmean","QmeanIDR","QmeanMEDIAN","Qmed","Qmin", "QminIDR","SFR")
+## will change to FFM and deltaH
+hydro.endpoints<- colnames(new_csci)[12:36]
+  #c("BFR","FracYearsNoFlow","HighDur","HighNum","Hydroperiod","LowDur", "LowNum","MaxMonth","MaxMonthQ","MedianNoFlowDays","MinMonth","MinMonthQ","NoDisturb","PDC50","Q01","Q05","Q10","Q25","Q50","Q75","Q90", "Q95","Q99","Qmax","QmaxIDR","Qmean","QmeanIDR","QmeanMEDIAN","Qmed","Qmin", "QminIDR","SFR")
 
 
 bio_h_summary<-  expand.grid(biol.endpoints=biol.endpoints,hydro.endpoints=hydro.endpoints, stringsAsFactors = F)
@@ -32,13 +47,14 @@ bio_h_summary<-  expand.grid(biol.endpoints=biol.endpoints,hydro.endpoints=hydro
 # glm(CSCI.10.pf_factor ~ HighDur, family=binomial(link="logit"), data=subset(csci, HighDur<=0))
 neg.glm<-lapply(1:nrow(bio_h_summary), function(i)
   {
+  
   hmet<-as.character(bio_h_summary[i,"hydro.endpoints"])
   bmet<-as.character(bio_h_summary[i,"biol.endpoints"])
   bmet.thresh<-thresholds[which(thresholds$Index2==bmet),"Tenth"]
   
-  mydat<-na.omit(csci[,c(hmet, bmet)])
+  mydat<-na.omit(new_csci[,c(hmet, bmet)])
   names(mydat)<-c("hydro","bio")
-  
+ 
   mydat[which(mydat$hydro<=0 ),]
   
   #   mydat$Condition<-ifelse(mydat$bio< bmet.thresh,"Poor","Healthy")
@@ -46,7 +62,7 @@ neg.glm<-lapply(1:nrow(bio_h_summary), function(i)
   #   mydat$Condition<-factor(mydat$Condition, levels=c("Poor","Healthy"))
   mydat$Condition<-ifelse(mydat$bio< bmet.thresh,0,1)
   mydat<-mydat[order(mydat$bio),]
-  
+ 
 
     glm(Condition~hydro, family=binomial(link="logit"), data=mydat)
 })
@@ -57,7 +73,7 @@ pos.glm<-lapply(1:nrow(bio_h_summary), function(i)
   bmet<-as.character(bio_h_summary[i,"biol.endpoints"])
   bmet.thresh<-thresholds[which(thresholds$Index2==bmet),"Tenth"]
   
-  mydat<-na.omit(csci[,c(hmet, bmet)])
+  mydat<-na.omit(new_csci[,c(hmet, bmet)])
   names(mydat)<-c("hydro","bio")
   
   mydat[which(mydat$hydro>=0 ),]
@@ -70,9 +86,9 @@ pos.glm<-lapply(1:nrow(bio_h_summary), function(i)
  
   glm(Condition~hydro, family=binomial(link="logit"), data=mydat)
 })
-
-hydro.m<-na.omit(unique(melt(csci[,hydro.endpoints])))
-tail(hydro.m)
+# warnings()
+head(new_csci)
+hydro.m<-na.omit(unique(melt(new_csci[,hydro.endpoints])))
 hydro.m<-hydro.m[order(hydro.m$variable,hydro.m$value),]
 names(hydro.m)<-c("hydro.endpoints","hydro.threshold")
 head(hydro.m)
@@ -95,7 +111,7 @@ bio_h_summary2$PredictedProbability<-
 })
 
 bio_h_summary2$Type<-ifelse(bio_h_summary2$hydro.threshold<0,"Negative","Positive")
-
+head(bio_h_summary2)
 
 ggplot(data=subset(bio_h_summary2, Type!="Negative" & biol.endpoints=="CSCI"), aes(x=hydro.threshold, y=PredictedProbability, color=biol.endpoints))+
   # geom_point(size=1)+
@@ -111,7 +127,7 @@ bio_h_summary3$NegValue<-sapply(1:nrow(bio_h_summary3), function(i)
   {
   hmet<-bio_h_summary3[i,"hydro.endpoints"]
   per<-bio_h_summary3[i,"Percentile"]
-  mydat<-data.frame(hydro=csci[,hmet])
+  mydat<-data.frame(hydro=new_csci[,hmet])
   mydat<-mydat$hydro[which(mydat$hydro<0)]
   quantile(mydat, per, na.rm=T)
 })
@@ -121,7 +137,7 @@ bio_h_summary3$PosValue<-sapply(1:nrow(bio_h_summary3), function(i)
 {
   hmet<-bio_h_summary3[i,"hydro.endpoints"]
   per<-bio_h_summary3[i,"Percentile"]
-  mydat<-data.frame(hydro=csci[,hmet])
+  mydat<-data.frame(hydro=new_csci[,hmet])
   mydat<-mydat$hydro[which(mydat$hydro>0)]
   quantile(mydat, per, na.rm=T)
 })
@@ -160,6 +176,7 @@ ggplot(data=bio_h_summary3, aes(x=NegValue, y=NegPredicted, color=biol.endpoints
   geom_path()+
   facet_wrap(~hydro.endpoints, scales="free_x")
 
+### looking at specific variables
 ggplot(data=subset(bio_h_summary3, hydro.endpoints=="Q01" ), aes(x=NegValue, y=NegPredicted, color=biol.endpoints))+
   geom_path()+
   facet_wrap(~hydro.endpoints, scales="free_x")+theme_classic(base_size=20)+
