@@ -58,14 +58,39 @@ head(delta_csci)
 ## subset hydro data to only median for testing
 
 dh_median <- subset(dh_data, summary.statistic =="median")
+dh_mean <- subset(dh_data, summary.statistic =="mean")
+dh_min <- subset(dh_data, summary.statistic =="min")
+dh_max <- subset(dh_data, summary.statistic =="max")
 head(dh_median)
 dh_median$deltaH ## lots of zeros
+dh_mean$deltaH
+dh_min$deltaH
+dh_max$deltaH
 
+## median
 dh_medianx <- dh_median[,c(1,4,7)]
 head(dh_medianx)
 dim(dh_medianx) ## 9897
-
 dh_medianx <- dcast(dh_medianx, site~flow_metric) # 443 ( waiting for additional bio sites)
+
+## mean
+dh_meanx <- dh_mean[,c(1,4,7)]
+head(dh_meanx)
+dim(dh_meanx) ## 9897
+dh_meanx <- dcast(dh_meanx, site~flow_metric) # 443 ( waiting for additional bio sites)
+
+## min
+
+dh_minx <- dh_min[,c(1,4,7)]
+head(dh_minx)
+dim(dh_minx) ## 9897
+dh_minx <- dcast(dh_minx, site~flow_metric) # 443 ( waiting for additional bio sites)
+
+## max
+dh_maxx <- dh_max[,c(1,4,7)]
+head(dh_maxx)
+dim(dh_maxx) ## 9897
+dh_maxx <- dcast(dh_maxx, site~flow_metric) # 443 ( waiting for additional bio sites)
 
 
 ## remove replicates
@@ -84,12 +109,25 @@ unique(csci_sub$Bug_StationCode)
 names(dh_medianx)
 names(csci_sub)
 
-all_dat <- merge(csci_sub, dh_medianx, by.x="Bug_StationCode", by.y="site")
-dim(all_dat) ## 273 (correct number from match above, waiting for updated csci values)
+## each type of metric
+all_dat_med <- merge(csci_sub, dh_medianx, by.x="Bug_StationCode", by.y="site")
+dim(all_dat_med) ## 273 (correct number from match above, waiting for updated csci values)
 
-head(all_dat)
+all_dat_mean <- merge(csci_sub, dh_meanx, by.x="Bug_StationCode", by.y="site")
+dim(all_dat_mean) ## 273 (correct number from match above, waiting for updated csci values)
 
-write.csv(all_dat, "output_data/00_csci_delta_formatted.csv")
+all_dat_min <- merge(csci_sub, dh_minx, by.x="Bug_StationCode", by.y="site")
+dim(all_dat_min) ## 273 (correct number from match above, waiting for updated csci values)
 
+all_dat_max <- merge(csci_sub, dh_maxx, by.x="Bug_StationCode", by.y="site")
+dim(all_dat_max) ## 273 (correct number from match above, waiting for updated csci values)
+
+
+head(all_dat_med)
+## save all 
+write.csv(all_dat_med, "output_data/00_csci_delta_formatted_median.csv")
+write.csv(all_dat_mean, "output_data/00_csci_delta_formatted_mean.csv")
+write.csv(all_dat_min, "output_data/00_csci_delta_formatted_min.csv")
+write.csv(all_dat_max, "output_data/00_csci_delta_formatted_max.csv")
 
 
