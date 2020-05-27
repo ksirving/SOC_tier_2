@@ -130,4 +130,4 @@ write.csv(all_dat_mean, "output_data/00_csci_delta_formatted_mean.csv")
 write.csv(all_dat_min, "output_data/00_csci_delta_formatted_min.csv")
 write.csv(all_dat_max, "output_data/00_csci_delta_formatted_max.csv")
 
-
+names(all_dat_max)
