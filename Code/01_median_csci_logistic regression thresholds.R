@@ -3,12 +3,20 @@ setwd("/Users/katieirving/Documents/git/SOC_tier2/SOC_tier_2")
 
 csci<-read.csv("Data/DeltaH_CSCI_MMI.CSV")
 head(csci)
-library(CSCI)
+# library(CSCI)
+install.packages("CSCI")
 library(reshape)
+install.packages("devtools")
+library(devtools)
+install_github("SCCWRP/CSCI")
+library(CSCI)
 # install.packages("reshape")
 library(ggplot2)
 
 ## below defines thresholds from all csci
+
+
+
 head(csci)
 ref<-loadRefData()
 endpoints<-c("CSCI","MMI","OoverE","Clinger_PercentTaxa_scored","Coleoptera_PercentTaxa_scored","EPT_PercentTaxa_scored",
@@ -34,7 +42,9 @@ head(thresholds)
 ## 
 new_csci <- read.csv("output_data/00_csci_delta_formatted_median.csv")
 head(new_csci)
-
+## remove peak timeing vars
+names(new_csci)
+new_csci <- new_csci[, -c(26:28)]
 ## add condition here so can add it to the figures later
 # thresholds
 # csci.thresh<-thresholds[which(thresholds$Index2=="CSCI"),"Tenth"]
@@ -52,7 +62,8 @@ biol.endpoints<-c("CSCI","OoverE","MMI")#,
 # "Clinger_PercentTaxa_score","Coleoptera_PercentTaxa_score","Taxonomic_Richness_score",
 # "EPT_PercentTaxa_score","Shredder_Taxa_score","Intolerant_Percent_score")
 ## will change to FFM and deltaH
-hydro.endpoints<- colnames(new_csci)[12:36]
+
+hydro.endpoints<- colnames(new_csci)[12:33]
   #c("BFR","FracYearsNoFlow","HighDur","HighNum","Hydroperiod","LowDur", "LowNum","MaxMonth","MaxMonthQ","MedianNoFlowDays","MinMonth","MinMonthQ","NoDisturb","PDC50","Q01","Q05","Q10","Q25","Q50","Q75","Q90", "Q95","Q99","Qmax","QmaxIDR","Qmean","QmeanIDR","QmeanMEDIAN","Qmed","Qmin", "QminIDR","SFR")
 
 
@@ -247,7 +258,7 @@ bio_h_summary2$Type<-ifelse(bio_h_summary2$hydro.threshold<0,"Negative","Positiv
 head(bio_h_summary2)
 tail(bio_h_summary2)
 
-
+## negative delta H
 ## subset only negative numbers
 neg_pred <- subset(bio_h_summary2, Type!="Positive")
 ## merge dataframes
@@ -258,15 +269,24 @@ data_neg$comb_code <- paste(data_neg$bio, "_", data_neg$hydro_code, sep="")
 # dim(data_neg)
 all_data <- merge(neg_pred, data_neg, by="comb_code", all=T)
 head(all_data)
-
+# unique(all_data$Type)
 
 all_data <- all_data[,c(1:7,8,11)]
 
-all_data <- subset(all_data,biol.endpoints=="CSCI")
-head(all_data)
+### CSCI endpoint
+all_data_csci <- subset(all_data,biol.endpoints=="CSCI")
+head(all_data_csci)
 
-all_data[which(all_data$hydro==-194),]
+### OoverE endpoint
+all_data_oe <- subset(all_data,biol.endpoints=="OoverE")
+head(all_data_oe)
 
+### MMI endpoint
+all_data_mmi <- subset(all_data,biol.endpoints=="MMI")
+head(all_data_mmi)
+
+# all_data[which(all_data$hydro==-194),]
+## all endpoints - each endpoint has different number of 1s and 0s
 ggplot(all_data, aes(x=hydro.threshold, y=PredictedProbability, color=biol.endpoints))+
   # geom_point(size=1)+
   geom_path()+#stat_summary(fun.y="mean", geom="line")+
@@ -274,17 +294,99 @@ ggplot(all_data, aes(x=hydro.threshold, y=PredictedProbability, color=biol.endpo
   geom_vline(xintercept=0, linetype="dashed")+
   geom_point(aes(y=Condition, x=hydro), colour = 'black', size = 1)
   
-  
-  #facet_wrap(~hydro_code, scales="free_x", nrow=4)
-  
-## IT WORKS!!!!!
-## fix hydro negs - not negs - data - fixed!
-## fix figure x axis (all metrics the same)
-## fix condition same - merge dataframes?
+## CSCI
+ggplot(all_data_csci, aes(x=hydro.threshold, y=PredictedProbability, color=biol.endpoints))+
+  # geom_point(size=1)+
+  geom_path()+#stat_summary(fun.y="mean", geom="line")+
+  facet_wrap(~hydro.endpoints, scales="free_x", nrow=4)+scale_y_continuous(limits=c(0,1))+
+  geom_vline(xintercept=0, linetype="dashed")+
+  geom_point(aes(y=Condition, x=hydro), colour = 'black', size = 1)
+
+## OoverE
+ggplot(all_data_oe, aes(x=hydro.threshold, y=PredictedProbability, color=biol.endpoints))+
+  # geom_point(size=1)+
+  # geom_line(aes(group=1), colour="green")+
+  geom_path()+#stat_summary(fun.y="mean", geom="line")+
+  facet_wrap(~hydro.endpoints, scales="free_x", nrow=4)+scale_y_continuous(limits=c(0,1))+
+  geom_vline(xintercept=0, linetype="dashed")+
+  geom_point(aes(y=Condition, x=hydro), colour = 'black', size = 1)
+
+  ## MMI
+ggplot(all_data_mmi, aes(x=hydro.threshold, y=PredictedProbability, color=biol.endpoints))+
+  # geom_point(size=1)+
+  geom_path()+#stat_summary(fun.y="mean", geom="line")+
+  facet_wrap(~hydro.endpoints, scales="free_x", nrow=4)+scale_y_continuous(limits=c(0,1))+
+  geom_vline(xintercept=0, linetype="dashed")+
+  geom_point(aes(y=Condition, x=hydro), colour = 'black', size = 1)
+
+
+# all_data[which(all_data$hydro==-194),]
+
+## positive
+
+## subset only negative numbers
+pos_pred <- subset(bio_h_summary2, Type!="Negative")
+## merge dataframes
+head(data_pos) ## condition 1/0s
+head(pos_pred) ## negative pred probs 
+# dim(neg_pred)
+data_pos$comb_code <- paste(data_pos$bio, "_", data_pos$hydro_code, sep="")
+# dim(data_neg)
+all_data <- merge(pos_pred, data_pos, by="comb_code", all=T)
+head(all_data)
+# unique(all_data$Type)
+
+all_data <- all_data[,c(1:7,8,11)]
+
+### CSCI endpoint
+all_data_csci <- subset(all_data,biol.endpoints=="CSCI")
+head(all_data_csci)
+
+### OoverE endpoint
+all_data_oe <- subset(all_data,biol.endpoints=="OoverE")
+head(all_data_oe)
+
+### MMI endpoint
+all_data_mmi <- subset(all_data,biol.endpoints=="MMI")
+head(all_data_mmi)
+
+# all_data[which(all_data$hydro==-194),]
+## all endpoints - each endpoint has different number of 1s and 0s
+ggplot(all_data, aes(x=hydro.threshold, y=PredictedProbability, color=biol.endpoints))+
+  # geom_point(size=1)+
+  geom_path()+#stat_summary(fun.y="mean", geom="line")+
+  facet_wrap(~hydro.endpoints, scales="free_x", nrow=4)+scale_y_continuous(limits=c(0,1))+
+  geom_vline(xintercept=0, linetype="dashed")+
+  geom_point(aes(y=Condition, x=hydro), colour = 'black', size = 1)
+
+## CSCI
+ggplot(all_data_csci, aes(x=hydro.threshold, y=PredictedProbability, color=biol.endpoints))+
+  # geom_point(size=1)+
+  geom_path()+#stat_summary(fun.y="mean", geom="line")+
+  facet_wrap(~hydro.endpoints, scales="free_x", nrow=4)+scale_y_continuous(limits=c(0,1))+
+  geom_vline(xintercept=0, linetype="dashed")+
+  geom_point(aes(y=Condition, x=hydro), colour = 'black', size = 1)
+
+## OoverE
+ggplot(all_data_oe, aes(x=hydro.threshold, y=PredictedProbability, color=biol.endpoints))+
+  # geom_point(size=1)+
+  # geom_line(aes(group=1), colour="green")+
+  geom_path()+#stat_summary(fun.y="mean", geom="line")+
+  facet_wrap(~hydro.endpoints, scales="free_x", nrow=4)+scale_y_continuous(limits=c(0,1))+
+  geom_vline(xintercept=0, linetype="dashed")+
+  geom_point(aes(y=Condition, x=hydro), colour = 'black', size = 1)
+
+## MMI
+ggplot(all_data_mmi, aes(x=hydro.threshold, y=PredictedProbability, color=biol.endpoints))+
+  # geom_point(size=1)+
+  geom_path()+#stat_summary(fun.y="mean", geom="line")+
+  facet_wrap(~hydro.endpoints, scales="free_x", nrow=4)+scale_y_continuous(limits=c(0,1))+
+  geom_vline(xintercept=0, linetype="dashed")+
+  geom_point(aes(y=Condition, x=hydro), colour = 'black', size = 1)
 
 
 
-
+####### other 
 
 
 
