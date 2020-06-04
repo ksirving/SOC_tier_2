@@ -18,19 +18,19 @@ dim(soc) ## 841
 unique(soc$BugID)
 
 ## bug sites - needs to be updated
-
-csci<-read.csv("Data/DeltaH_CSCI_MMI.CSV")
+csci<-read.csv("Data/Liesl_CSCI_deltaHsites_soCA_regionalcurves_060420.csv")
+# csci<-read.csv("Data/DeltaH_CSCI_MMI.CSV")
 head(csci) ## 524
-unique(csci$Bug_StationCode)
+unique(csci$stationcode) ## 709
 
 
 ## match sites
 
-csci_sites <- unique(csci$Bug_StationCode)
+csci_sites <- unique(csci$stationcode)
 soc_sites <- unique(soc$BugID)
 
 soc_sites %in% csci_sites
-sum(soc_sites %in% csci_sites) ## 524
+sum(soc_sites %in% csci_sites) ## 409
 
 ## all original sites match, not 800+ sites from Kris
 
@@ -41,20 +41,22 @@ head(dh_data)
 unique(dh_data$site)
 ## match sites to csci sites
 
-csci_sites <- unique(csci$Bug_StationCode)
+csci_sites <- unique(csci$stationcode)
 delta_sites <- unique(dh_data$site)
 
 delta_sites %in% csci_sites
-sum(delta_sites %in% csci_sites) # 273
+sum(delta_sites %in% csci_sites) # 409
 
 csci_sites %in% delta_sites
-sum(csci_sites %in% delta_sites) #273
+sum(csci_sites %in% delta_sites) # 409
 
 ### extract only csci sites in delta sites
 
-delta_csci <- subset(csci, Bug_StationCode %in% delta_sites)
+delta_csci <- subset(csci, stationcode %in% delta_sites)
 dim(delta_csci)
 head(delta_csci)
+names(delta_csci)
+delta_csci <- delta_csci[,c(1,3,4,18,20,22,43,44)]
 
 ## format delta to columns
 ## subset hydro data to only median for testing
@@ -98,39 +100,42 @@ dh_maxx <- dcast(dh_maxx, site~flow_metric) # 443 ( waiting for additional bio s
 ## remove replicates
 head(csci_sub)
 
-csci_sub <- csci[, c(1:10)]
-dim(csci_sub) ## 660 - replicate samples - take the most recent
-## use duplicate to remove all duplicates except for last
-csci_sub<- csci_sub[ !duplicated(csci_sub[, c("Bug_StationCode")], fromLast=T),]
-dim(csci_sub) ## 524
-
-unique(csci_sub$Bug_StationCode)
+# csci_sub <- csci[, c(1:10)]
+# dim(csci_sub) ## 660 - replicate samples - take the most recent
+# ## use duplicate to remove all duplicates except for last
+# csci_sub<- csci_sub[ !duplicated(csci_sub[, c("Bug_StationCode")], fromLast=T),]
+# dim(csci_sub) ## 524
+# 
+# unique(csci_sub$Bug_StationCode)
 
 ## join with hydro data 
 
 names(dh_medianx)
 names(csci_sub)
+names(delta_csci)
+
+csci_sub <- delta_csci
 
 ## each type of metric
-all_dat_med <- merge(csci_sub, dh_medianx, by.x="Bug_StationCode", by.y="site")
-dim(all_dat_med) ## 273 (correct number from match above, waiting for updated csci values)
+all_dat_med <- merge(csci_sub, dh_medianx, by.x="stationcode", by.y="site")
+dim(all_dat_med) ## 409 
 
-all_dat_mean <- merge(csci_sub, dh_meanx, by.x="Bug_StationCode", by.y="site")
-dim(all_dat_mean) ## 273 (correct number from match above, waiting for updated csci values)
+all_dat_mean <- merge(csci_sub, dh_meanx, by.x="stationcode", by.y="site")
+dim(all_dat_mean) ## 409 
 
-all_dat_min <- merge(csci_sub, dh_minx, by.x="Bug_StationCode", by.y="site")
-dim(all_dat_min) ## 273 (correct number from match above, waiting for updated csci values)
+all_dat_min <- merge(csci_sub, dh_minx, by.x="stationcode", by.y="site")
+dim(all_dat_min) ## 409
 
-all_dat_max <- merge(csci_sub, dh_maxx, by.x="Bug_StationCode", by.y="site")
-dim(all_dat_max) ## 273 (correct number from match above, waiting for updated csci values)
+all_dat_max <- merge(csci_sub, dh_maxx, by.x="stationcode", by.y="site")
+dim(all_dat_max) ## 409 
 
 
 head(all_dat_med)
 ## save all 
-write.csv(all_dat_med, "output_data/00_csci_delta_formatted_median.csv")
-write.csv(all_dat_mean, "output_data/00_csci_delta_formatted_mean.csv")
-write.csv(all_dat_min, "output_data/00_csci_delta_formatted_min.csv")
-write.csv(all_dat_max, "output_data/00_csci_delta_formatted_max.csv")
+write.csv(all_dat_med, "output_data/00_csci_delta_formatted_median_updated.csv")
+write.csv(all_dat_mean, "output_data/00_csci_delta_formatted_mean_updated.csv")
+write.csv(all_dat_min, "output_data/00_csci_delta_formatted_min_updated.csv")
+write.csv(all_dat_max, "output_data/00_csci_delta_formatted_max_updated.csv")
 
 names(all_dat_max)
 

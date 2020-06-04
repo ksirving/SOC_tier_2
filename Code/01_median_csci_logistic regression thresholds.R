@@ -4,18 +4,16 @@ setwd("/Users/katieirving/Documents/git/SOC_tier2/SOC_tier_2")
 csci<-read.csv("Data/DeltaH_CSCI_MMI.CSV")
 head(csci)
 # library(CSCI)
-install.packages("CSCI")
+# install.packages("CSCI")
 library(reshape)
-install.packages("devtools")
-library(devtools)
-install_github("SCCWRP/CSCI")
+# install.packages("devtools")
+# library(devtools)
+# install_github("SCCWRP/CSCI")
 library(CSCI)
 # install.packages("reshape")
 library(ggplot2)
 
 ## below defines thresholds from all csci
-
-
 
 head(csci)
 ref<-loadRefData()
@@ -40,11 +38,12 @@ thresholds$ObservedQuartile<-sapply(thresholds$Index2, function(ind)
 head(thresholds)
 ## from here add new formatted data
 ## 
-new_csci <- read.csv("output_data/00_csci_delta_formatted_median.csv")
+new_csci <- read.csv("output_data/00_csci_delta_formatted_median_updated.csv")
 head(new_csci)
 ## remove peak timeing vars
 names(new_csci)
-new_csci <- new_csci[, -c(26:28)]
+new_csci <- new_csci[, -c(24:26)]
+names(new_csci)[5:7] <- c("OoverE", "MMI", "CSCI")
 ## add condition here so can add it to the figures later
 # thresholds
 # csci.thresh<-thresholds[which(thresholds$Index2=="CSCI"),"Tenth"]
@@ -63,7 +62,7 @@ biol.endpoints<-c("CSCI","OoverE","MMI")#,
 # "EPT_PercentTaxa_score","Shredder_Taxa_score","Intolerant_Percent_score")
 ## will change to FFM and deltaH
 
-hydro.endpoints<- colnames(new_csci)[12:33]
+hydro.endpoints<- colnames(new_csci)[10:31]
   #c("BFR","FracYearsNoFlow","HighDur","HighNum","Hydroperiod","LowDur", "LowNum","MaxMonth","MaxMonthQ","MedianNoFlowDays","MinMonth","MinMonthQ","NoDisturb","PDC50","Q01","Q05","Q10","Q25","Q50","Q75","Q90", "Q95","Q99","Qmax","QmaxIDR","Qmean","QmeanIDR","QmeanMEDIAN","Qmed","Qmin", "QminIDR","SFR")
 
 
@@ -161,7 +160,7 @@ pos.glm<-lapply(1:nrow(bio_h_summary), function(i)
 #   mydat$Condition<-factor(mydat$Condition, levels=c("Poor","Healthy"))
  mydat$Condition<-ifelse(mydat$bio< bmet.thresh,0,1)
  mydat<-mydat[order(mydat$bio),]
- write.csv(mydat, paste("output_data/glm_data/06_", bmet,"_pos_", hmet,  "_glm.csv", sep=""))
+ # write.csv(mydat, paste("output_data/glm_data/06_", bmet,"_pos_", hmet,  "_glm.csv", sep=""))
  
   glm(Condition~hydro, family=binomial(link="logit"), data=mydat)
  
@@ -272,18 +271,21 @@ head(all_data)
 # unique(all_data$Type)
 
 all_data <- all_data[,c(1:7,8,11)]
-
+write.csv(all_data, "output_data/01_all_data_neg_logR_metrics_figures.csv")
 ### CSCI endpoint
 all_data_csci <- subset(all_data,biol.endpoints=="CSCI")
 head(all_data_csci)
+write.csv(all_data_csci, "output_data/01_csci_neg_logR_metrics_figures.csv")
 
 ### OoverE endpoint
 all_data_oe <- subset(all_data,biol.endpoints=="OoverE")
 head(all_data_oe)
+write.csv(all_data_oe, "output_data/01_OoverE_neg_logR_metrics_figures.csv")
 
 ### MMI endpoint
 all_data_mmi <- subset(all_data,biol.endpoints=="MMI")
 head(all_data_mmi)
+write.csv(all_data_mmi, "output_data/01_mmi_neg_logR_metrics_figures.csv")
 
 # all_data[which(all_data$hydro==-194),]
 ## all endpoints - each endpoint has different number of 1s and 0s
@@ -337,18 +339,21 @@ head(all_data)
 # unique(all_data$Type)
 
 all_data <- all_data[,c(1:7,8,11)]
-
+write.csv(all_data, "output_data/01_all_data_pos_logR_metrics_figures.csv")
 ### CSCI endpoint
 all_data_csci <- subset(all_data,biol.endpoints=="CSCI")
 head(all_data_csci)
+write.csv(all_data_csci, "output_data/01_csci_pos_logR_metrics_figures.csv")
 
 ### OoverE endpoint
 all_data_oe <- subset(all_data,biol.endpoints=="OoverE")
 head(all_data_oe)
+write.csv(all_data_oe, "output_data/01_OoverE_pos_logR_metrics_figures.csv")
 
 ### MMI endpoint
 all_data_mmi <- subset(all_data,biol.endpoints=="MMI")
 head(all_data_mmi)
+write.csv(all_data_mmi, "output_data/01_mmi_pos_logR_metrics_figures.csv")
 
 # all_data[which(all_data$hydro==-194),]
 ## all endpoints - each endpoint has different number of 1s and 0s
